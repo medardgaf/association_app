@@ -29,7 +29,7 @@
             border: 1px solid #ccc;
             font-size: 1em;
         }
-        form button {
+        form button, .btn-supprimer {
             margin-top: 20px;
             padding: 10px 15px;
             background-color: #007bff;
@@ -39,7 +39,7 @@
             cursor: pointer;
             font-size: 1em;
         }
-        form button:hover {
+        form button:hover, .btn-supprimer:hover {
             background-color: #0056b3;
         }
         table {
@@ -63,6 +63,9 @@
         }
         a.logout:hover {
             text-decoration: underline;
+        }
+        form.supprimer-form {
+            display: inline;
         }
     </style>
 </head>
@@ -100,12 +103,18 @@
                 <th>ID Membre</th>
                 <th>Montant (FCFA)</th>
                 <th>Date</th>
+                <th>Actions</th>
             </tr>
             {% for cotisation in cotisations %}
             <tr>
                 <td>{{ cotisation.membre_id }}</td>
                 <td>{{ cotisation.montant }} FCFA</td>
                 <td>{{ cotisation.date }}</td>
+                <td>
+                    <form class="supprimer-form" action="{{ url_for('supprimer_cotisation', cotisation_id=cotisation.id) }}" method="post" onsubmit="return confirm('Confirmer la suppression ?');">
+                        <button type="submit" class="btn-supprimer">Supprimer</button>
+                    </form>
+                </td>
             </tr>
             {% endfor %}
         </table>
