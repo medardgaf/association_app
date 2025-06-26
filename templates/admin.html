@@ -8,9 +8,6 @@
             background: #f0f2f5;
             margin: 0; padding: 20px;
         }
-        h1, h2, h3 {
-            color: #333;
-        }
         .container {
             max-width: 900px;
             margin: auto;
@@ -19,18 +16,28 @@
             border-radius: 8px;
             box-shadow: 0 0 15px rgba(0,0,0,0.1);
         }
-        form input, form button {
-            padding: 10px;
-            margin: 5px 10px 15px 0;
+        form label {
+            display: block;
+            margin-top: 15px;
+            font-weight: bold;
+        }
+        form select, form input {
+            width: 100%;
+            padding: 8px;
+            margin-top: 5px;
             border-radius: 4px;
             border: 1px solid #ccc;
             font-size: 1em;
         }
         form button {
+            margin-top: 20px;
+            padding: 10px 15px;
             background-color: #007bff;
             color: white;
             border: none;
+            border-radius: 4px;
             cursor: pointer;
+            font-size: 1em;
         }
         form button:hover {
             background-color: #0056b3;
@@ -38,7 +45,7 @@
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 25px;
+            margin-top: 30px;
         }
         th, td {
             padding: 10px;
@@ -47,9 +54,6 @@
         }
         th {
             background: #f7f7f7;
-        }
-        .chart-container {
-            margin-top: 30px;
         }
         a.logout {
             display: inline-block;
@@ -61,54 +65,42 @@
             text-decoration: underline;
         }
     </style>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <div class="container">
         <h1>Bienvenue, {{ user.prenom }} {{ user.nom }} (Admin)</h1>
-        <h2>Total des cotisations : {{ total }} €</h2>
+        <h2>Total des cotisations : {{ total }} FCFA</h2>
 
         <h3>Ajouter une cotisation</h3>
         <form action="/ajouter_cotisation" method="post">
-            <input type="number" name="membre_id" placeholder="ID Membre" required>
-            <input type="number" step="0.01" name="montant" placeholder="Montant (€)" required>
-            <input type="date" name="date" required>
+            <label for="membre_id">Sélectionnez un membre :</label>
+            <select name="membre_id" id="membre_id" required>
+                <option value="" disabled selected>Choisissez un membre</option>
+                {% for membre in membres %}
+                    <option value="{{ membre.id }}">{{ membre.prenom }} {{ membre.nom }} (ID: {{ membre.id }})</option>
+                {% endfor %}
+            </select>
+
+            <label for="montant">Montant (en FCFA) :</label>
+            <input type="number" step="1" name="montant" id="montant" placeholder="Montant en FCFA" required>
+
+            <label for="date">Date :</label>
+            <input type="date" name="date" id="date" required>
+
             <button type="submit">Enregistrer</button>
         </form>
-
-        <h3>Liste des membres inscrits</h3>
-        <table>
-            <tr>
-                <th>ID</th>
-                <th>Prénom</th>
-                <th>Nom</th>
-                <th>Email</th>
-            </tr>
-            {% for membre in membres %}
-            <tr>
-                <td>{{ membre.id }}</td>
-                <td>{{ membre.prenom }}</td>
-                <td>{{ membre.nom }}</td>
-                <td>{{ membre.email }}</td>
-            </tr>
-            {% endfor %}
-        </table>
-
-        <div class="chart-container">
-            <canvas id="cotisationsChart" width="800" height="400"></canvas>
-        </div>
 
         <h3>Historique des cotisations</h3>
         <table>
             <tr>
                 <th>ID Membre</th>
-                <th>Montant (€)</th>
+                <th>Montant (FCFA)</th>
                 <th>Date</th>
             </tr>
             {% for cotisation in cotisations %}
             <tr>
                 <td>{{ cotisation.membre_id }}</td>
-                <td>{{ cotisation.montant }}</td>
+                <td>{{ cotisation.montant }} FCFA</td>
                 <td>{{ cotisation.date }}</td>
             </tr>
             {% endfor %}
@@ -116,50 +108,5 @@
 
         <a href="/logout" class="logout">Déconnexion</a>
     </div>
-
-    <script>
-        const cotisations = {{ cotisations_json | tojson }};
-        
-        // Regrouper les cotisations par date
-        const dataByDate = {};
-        cotisations.forEach(c => {
-            if (dataByDate[c.date]) {
-                dataByDate[c.date] += c.montant;
-            } else {
-                dataByDate[c.date] = c.montant;
-            }
-        });
-
-        const labels = Object.keys(dataByDate).sort();
-        const dataValues = labels.map(date => dataByDate[date]);
-
-        const ctx = document.getElementById('cotisationsChart').getContext('2d');
-        const chart = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: 'Cotisations par date (€)',
-                    backgroundColor: 'rgba(0,123,255,0.2)',
-                    borderColor: 'rgba(0,123,255,1)',
-                    data: dataValues,
-                    fill: true,
-                    tension: 0.3
-                }]
-            },
-            options: {
-                responsive: true,
-                scales: {
-                    x: {
-                        title: { display: true, text: 'Date' }
-                    },
-                    y: {
-                        beginAtZero: true,
-                        title: { display: true, text: 'Montant (€)' }
-                    }
-                }
-            }
-        });
-    </script>
 </body>
 </html>
