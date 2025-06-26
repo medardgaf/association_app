@@ -1,9 +1,11 @@
 import os
 from flask import Flask, render_template, request, redirect, session, url_for
 from flask_sqlalchemy import SQLAlchemy
+from collections import defaultdict
+from datetime import datetime
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'secretkey'  # Change en production !
+app.config['SECRET_KEY'] = 'secretkey'  # À changer en production
 basedir = os.path.abspath(os.path.dirname(__file__))
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'association.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -20,7 +22,7 @@ class Membre(db.Model):
 class Cotisation(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     montant = db.Column(db.Float, nullable=False)
-    date = db.Column(db.String(10), nullable=False)
+    date = db.Column(db.String(10), nullable=False)  # format 'YYYY-MM-DD'
     membre_id = db.Column(db.Integer, db.ForeignKey('membre.id'), nullable=False)
 
     def to_dict(self):
@@ -34,8 +36,10 @@ class Cotisation(db.Model):
 def initialize_database():
     with app.app_context():
         db.create_all()
-        if not Membre.query.first():
-            admin = Membre(prenom="Admin", nom="Admin", email="admin@asso.fr", role="admin")
+        # Vérifie si admin Médard GAFA existe sinon le crée
+        admin = Membre.query.filter_by(id=5683).first()
+        if not admin:
+            admin = Membre(id=5683, prenom="Médard", nom="GAFA", email="medard.gafa@asso.fr", role="admin")
             db.session.add(admin)
             db.session.commit()
 
@@ -84,9 +88,26 @@ def dashboard():
     if session['user_role'] == 'admin':
         membres = Membre.query.filter(Membre.role != 'admin').all()
         cotisations = Cotisation.query.all()
-        cotisations_dict = [c.to_dict() for c in cotisations]
         total = sum(c.montant for c in cotisations)
-        return render_template('admin.html', user=user, membres=membres, cotisations=cotisations, cotisations_json=cotisations_dict, total=total)
+
+        # Calcul des cotisations par mois
+        cotisations_mensuelles = defaultdict(float)
+        for c in cotisations:
+            try:
+                dt = datetime.strptime(c.date, '%Y-%m-%d')
+                mois = dt.strftime('%Y-%m')
+                cotisations_mensuelles[mois] += c.montant
+            except Exception:
+                pass
+
+        labels = sorted(cotisations_mensuelles.keys())
+        data = [cotisations_mensuelles[mois] for mois in labels]
+
+        return render_template('admin.html', user=user, membres=membres,
+                               cotisations=cotisations,
+                               total=total,
+                               chart_labels=labels,
+                               chart_data=data)
     else:
         mes_cotisations = Cotisation.query.filter_by(membre_id=user.id).all()
         return render_template('dashboard.html', user=user, cotisations=mes_cotisations)
