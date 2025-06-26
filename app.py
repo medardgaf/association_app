@@ -1,16 +1,15 @@
-import os
 from flask import Flask, render_template, request, redirect, session, url_for
 from flask_sqlalchemy import SQLAlchemy
+import os
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'secretkey'  # Change en production !
+app.config['SECRET_KEY'] = 'secretkey'  # À changer en production
 basedir = os.path.abspath(os.path.dirname(__file__))
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'association.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
 
-# Modèles
 class Membre(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     prenom = db.Column(db.String(80), nullable=False)
@@ -32,7 +31,6 @@ class Cotisation(db.Model):
             'membre_id': self.membre_id
         }
 
-# Initialisation de la base + admin par défaut
 def initialize_database():
     with app.app_context():
         db.create_all()
@@ -42,8 +40,6 @@ def initialize_database():
             db.session.commit()
 
 initialize_database()
-
-# Routes
 
 @app.route('/')
 def login():
