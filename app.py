@@ -5,9 +5,16 @@ from collections import defaultdict
 from datetime import datetime
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'secretkey'  # À changer en production
-basedir = os.path.abspath(os.path.dirname(__file__))
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'association.db')
+app.config['SECRET_KEY'] = 'secretkey'  # Change en production !
+
+# Configuration base de données PostgreSQL fournie
+DATABASE_URL = "postgresql://association_jna_user:5YBdfXrYi3sQHDCZ9tFdDC0252LwjIyO@dpg-d1elnoali9vc73a7ur1g-a/association_jna"
+
+# Pour compatibilité SQLAlchemy si l'URL commence par postgres://
+if DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+
+app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URL
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
@@ -36,7 +43,6 @@ class Cotisation(db.Model):
 def initialize_database():
     with app.app_context():
         db.create_all()
-        # Vérifie si admin Médard GAFA existe sinon le crée
         admin = Membre.query.filter_by(id=5683).first()
         if not admin:
             admin = Membre(id=5683, prenom="Médard", nom="GAFA", email="medard.gafa@asso.fr", role="admin")
@@ -90,7 +96,7 @@ def dashboard():
         cotisations = Cotisation.query.all()
         total = sum(c.montant for c in cotisations)
 
-        # Calcul des cotisations par mois
+        # Cotisations par mois
         cotisations_mensuelles = defaultdict(float)
         for c in cotisations:
             try:
@@ -127,6 +133,16 @@ def ajouter_cotisation():
     nouvelle_cotisation = Cotisation(montant=montant, date=date, membre_id=membre_id)
     db.session.add(nouvelle_cotisation)
     db.session.commit()
+    return redirect(url_for('dashboard'))
+
+@app.route('/supprimer_cotisation/<int:cotisation_id>', methods=['POST'])
+def supprimer_cotisation(cotisation_id):
+    if session.get('user_role') != 'admin':
+        return redirect(url_for('dashboard'))
+    cotisation = Cotisation.query.get(cotisation_id)
+    if cotisation:
+        db.session.delete(cotisation)
+        db.session.commit()
     return redirect(url_for('dashboard'))
 
 @app.route('/logout')
