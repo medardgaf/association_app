@@ -1,9 +1,9 @@
+import os
 from flask import Flask, render_template, request, redirect, session, url_for
 from flask_sqlalchemy import SQLAlchemy
-import os
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'secretkey'  # À changer en production
+app.config['SECRET_KEY'] = 'secretkey'  # Change en production !
 basedir = os.path.abspath(os.path.dirname(__file__))
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'association.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
