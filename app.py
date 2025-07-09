@@ -8,7 +8,7 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secretkey'  # Change en production !
 
 # Configuration base de données PostgreSQL fournie
-DATABASE_URL = "postgresql://association_jna_user:5YBdfXrYi3sQHDCZ9tFdDC0252LwjIyO@dpg-d1elnoali9vc73a7ur1g-a/association_jna"
+DATABASE_URL = "mysql+pymysql://b14_39431789:Cemit565@sql301.byethost14.com/b14_39431789"
 
 # Pour compatibilité SQLAlchemy si l'URL commence par postgres://
 if DATABASE_URL.startswith("postgres://"):
